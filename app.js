@@ -5,7 +5,8 @@ const state = {
     currentLevel: 0,
     currentTarget: null, // 'red', 'green', 'blue', 'yellow'
     score: 0,
-    lastMatchTime: 0
+    lastMatchTime: 0,
+    playerName: ''
 };
 
 // Config
@@ -28,6 +29,8 @@ const instructionText = document.getElementById('instruction-text');
 const uiFeedback = document.getElementById('feedback-overlay');
 const startBtn = document.getElementById('start-btn');
 const permBtn = document.getElementById('perm-btn');
+const nameInput = document.getElementById('player-name-input');
+const feedbackText = document.getElementById('feedback-text');
 
 // Audio / TTS
 let polishVoice = null;
@@ -38,7 +41,21 @@ const synth = window.speechSynthesis;
 // -------------------------------------------------------------------------
 
 async function init() {
+    // Check local storage for name
+    const savedName = localStorage.getItem('lowcy_player_name');
+    if (savedName) {
+        nameInput.value = savedName;
+    }
+
     startBtn.addEventListener('click', () => {
+        const name = nameInput.value.trim();
+        if (!name) {
+            alert("Proszę wpisz swoje imię!");
+            return;
+        }
+        state.playerName = name;
+        localStorage.setItem('lowcy_player_name', name);
+        
         uiStart.classList.add('hidden');
         uiPermission.classList.remove('hidden');
     });
@@ -198,11 +215,15 @@ function handleSuccess() {
     if (now - state.lastMatchTime < 3000) return; // Cooldown
     state.lastMatchTime = now;
 
+    const praiseText = `Brawo ${state.playerName}, znalazłeś kolor!`;
+
     // Feedback
-    speak("Brawo! To ten kolor!");
+    speak(praiseText);
     
     // Visuals
     uiFeedback.classList.remove('hidden');
+    feedbackText.innerText = `BRAWO ${state.playerName.toUpperCase()}!`;
+    
     confetti({
         particleCount: 100,
         spread: 70,
@@ -215,7 +236,7 @@ function handleSuccess() {
     setTimeout(() => {
         uiFeedback.classList.add('hidden');
         pickNewTarget();
-    }, 2000);
+    }, 2500); // Slightly longer delay to let them hear the speech
 }
 
 function gameLoop() {
