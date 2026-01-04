@@ -56,11 +56,17 @@ async function init() {
         state.playerName = name;
         localStorage.setItem('lowcy_player_name', name);
         
+        // Warm up TTS immediately on click
+        speak(`Cześć ${name}!`);
+
         uiStart.classList.add('hidden');
         uiPermission.classList.remove('hidden');
     });
 
     permBtn.addEventListener('click', async () => {
+        // Ensure TTS is ready
+        speak("Uruchamiam kamerę.");
+        
         await startCamera();
         uiPermission.classList.add('hidden');
         startGame();
@@ -121,25 +127,35 @@ async function startCamera() {
 
 function loadVoices() {
     const voices = synth.getVoices();
-    // Prefer local polish voice, then any polish voice
-    polishVoice = voices.find(v => v.lang === 'pl-PL' && v.localService) 
-               || voices.find(v => v.lang === 'pl-PL');
-    console.log("Selected Voice:", polishVoice ? polishVoice.name : "None");
+    // Try to find exact PL match, or any PL match
+    polishVoice = voices.find(v => v.lang === 'pl-PL') 
+               || voices.find(v => v.lang.startsWith('pl'));
+    
+    if (polishVoice) {
+        console.log("Selected Voice:", polishVoice.name);
+    } else {
+        console.log("No specific Polish voice found, relying on lang tag.");
+    }
 }
 
 function speak(text) {
-    if (!polishVoice) {
-        loadVoices(); // Try again
-        if (!polishVoice) return; // Fallback to silent or beep?
-    }
-    
-    // Cancel previous speech
+    // Cancel previous speech to prevent queue buildup
     synth.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = polishVoice;
+    utterance.lang = 'pl-PL'; // Ensure browser knows it's Polish
+    
+    // If we found a specific nice voice, use it
+    if (!polishVoice) {
+        loadVoices(); 
+    }
+    if (polishVoice) {
+        utterance.voice = polishVoice;
+    }
+
     utterance.rate = 1.0;
-    utterance.pitch = 1.1; // Slightly higher for kids
+    utterance.pitch = 1.0;
+    
     synth.speak(utterance);
 }
 
