@@ -38,6 +38,7 @@ const startBtn = document.getElementById('start-btn');
 const permBtn = document.getElementById('perm-btn');
 const nameInput = document.getElementById('player-name-input');
 const feedbackText = document.getElementById('feedback-text');
+const feedbackImg = document.getElementById('feedback-snapshot');
 
 // Audio / TTS
 let polishVoice = null;
@@ -244,10 +245,30 @@ function pickNewTarget() {
 
 function handleSuccess() {
     const now = Date.now();
-    if (now - state.lastMatchTime < 3000) return; // Cooldown
+    if (now - state.lastMatchTime < 4000) return; // Increased cooldown for snapshot viewing
     state.lastMatchTime = now;
 
     const praiseText = `Brawo ${state.playerName}, znalazłeś kolor!`;
+
+    // Capture Snapshot
+    const snapCanvas = document.createElement('canvas');
+    snapCanvas.width = video.videoWidth;
+    snapCanvas.height = video.videoHeight;
+    const snapCtx = snapCanvas.getContext('2d');
+    
+    // Draw video frame
+    snapCtx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height);
+    
+    // Optional: Draw a "target circle" on the snapshot to show what was found
+    const cx = snapCanvas.width / 2;
+    const cy = snapCanvas.height / 2;
+    snapCtx.beginPath();
+    snapCtx.arc(cx, cy, 50, 0, 2 * Math.PI);
+    snapCtx.lineWidth = 10;
+    snapCtx.strokeStyle = 'white';
+    snapCtx.stroke();
+    
+    feedbackImg.src = snapCanvas.toDataURL('image/jpeg');
 
     // Feedback
     speak(praiseText);
@@ -268,7 +289,7 @@ function handleSuccess() {
     setTimeout(() => {
         uiFeedback.classList.add('hidden');
         pickNewTarget();
-    }, 2500); // Slightly longer delay to let them hear the speech
+    }, 3500); // Longer delay to admire the photo
 }
 
 function gameLoop() {
