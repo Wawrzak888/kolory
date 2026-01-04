@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Łowcy Kolorów</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Camera Feed -->
+        <video id="camera-feed" autoplay muted playsinline webkit-playsinline></video>
+        
+        <!-- Hidden Canvas for processing -->
+        <canvas id="process-canvas" style="display: none;"></canvas>
+
+        <!-- UI Overlay -->
+        <div id="ui-layer">
+            <div id="target-display" class="hidden">
+                <div id="target-icon"></div>
+                <p id="instruction-text">Znajdź kolor...</p>
+            </div>
+
+            <div id="start-screen">
+                <h1>Łowcy Kolorów</h1>
+                <button id="start-btn" class="big-button">START</button>
+            </div>
+
+            <div id="permission-screen" class="hidden">
+                <p>Potrzebuję Twoich oczu, by szukać kolorów!</p>
+                <button id="perm-btn" class="big-button">POZWÓL</button>
+            </div>
+
+            <div id="feedback-overlay" class="hidden">
+                <div class="feedback-content">
+                    <span id="feedback-emoji">🎉</span>
+                    <h2 id="feedback-text">BRAWO!</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js" type="module"></script>
+</body>
+</html>

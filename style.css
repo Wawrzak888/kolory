@@ -1,0 +1,184 @@
+:root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+}
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; /* Child friendly font */
+    background-color: #000;
+}
+
+#app {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#camera-feed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none; /* Let touches pass through where possible */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+}
+
+#ui-layer > div {
+    pointer-events: auto;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Start & Permission Screens */
+#start-screen, #permission-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 215, 0, 0.9); /* Gold background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 10;
+}
+
+h1 {
+    font-size: 3rem;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+p {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 2rem;
+    padding: 0 20px;
+}
+
+.big-button {
+    background-color: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 20px 60px;
+    font-size: 2rem;
+    font-weight: bold;
+    box-shadow: 0 10px 0 #c0392b;
+    transition: transform 0.1s;
+    cursor: pointer;
+    min-width: 200px;
+    min-height: 80px; /* Fat finger friendly */
+}
+
+.big-button:active {
+    transform: translateY(5px);
+    box-shadow: 0 5px 0 #c0392b;
+}
+
+/* Target Display */
+#target-display {
+    position: absolute;
+    top: calc(var(--safe-top) + 20px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px 30px;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+#target-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    margin-bottom: 5px;
+}
+
+#instruction-text {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Feedback Overlay */
+#feedback-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 255, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    animation: pulse 0.5s ease-in-out;
+}
+
+.feedback-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    transform: scale(1.2);
+}
+
+#feedback-emoji {
+    font-size: 4rem;
+    display: block;
+}
+
+#feedback-text {
+    font-size: 2.5rem;
+    color: #2ecc71;
+    margin: 10px 0 0 0;
+}
+
+@keyframes pulse {
+    0% { opacity: 0; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+}
