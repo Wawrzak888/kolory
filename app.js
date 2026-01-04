@@ -14,7 +14,14 @@ const COLORS = {
     'red': { h: [345, 15], s: [20, 100], l: [15, 85], name: 'czerwony', hex: '#ff4757' },
     'green': { h: [75, 150], s: [20, 100], l: [15, 85], name: 'zielony', hex: '#2ecc71' },
     'blue': { h: [190, 250], s: [20, 100], l: [15, 85], name: 'niebieski', hex: '#3742fa' },
-    'yellow': { h: [45, 70], s: [20, 100], l: [15, 85], name: 'żółty', hex: '#f1c40f' }
+    'yellow': { h: [45, 70], s: [20, 100], l: [15, 85], name: 'żółty', hex: '#f1c40f' },
+    'orange': { h: [15, 45], s: [20, 100], l: [15, 85], name: 'pomarańczowy', hex: '#e67e22' },
+    'purple': { h: [250, 290], s: [20, 100], l: [15, 85], name: 'fioletowy', hex: '#9b59b6' },
+    'pink': { h: [290, 345], s: [20, 100], l: [15, 85], name: 'różowy', hex: '#ff6b81' },
+    'cyan': { h: [150, 190], s: [20, 100], l: [15, 85], name: 'turkusowy', hex: '#00cec9' },
+    'white': { h: [0, 360], s: [0, 20], l: [80, 100], name: 'biały', hex: '#ffffff' },
+    'black': { h: [0, 360], s: [0, 100], l: [0, 15], name: 'czarny', hex: '#2f3542' },
+    'gray': { h: [0, 360], s: [0, 20], l: [15, 80], name: 'szary', hex: '#a4b0be' }
 };
 
 // DOM Elements
@@ -184,11 +191,20 @@ function rgbToHsl(r, g, b) {
 }
 
 function isColorMatch(h, s, l, targetKey) {
-    // Basic validation
-    if (s < 20 || l < 15 || l > 85) return false;
-
     const target = COLORS[targetKey];
     if (!target) return false;
+
+    // Special logic for achromatics (white, black, gray)
+    if (targetKey === 'white' || targetKey === 'black' || targetKey === 'gray') {
+        // Ignore hue for these, check only Saturation and Lightness
+        const sMatch = (s >= target.s[0] && s <= target.s[1]);
+        const lMatch = (l >= target.l[0] && l <= target.l[1]);
+        return sMatch && lMatch;
+    }
+
+    // Basic validation for chromatic colors
+    // Must have some saturation and not be too dark/light
+    if (s < 20 || l < 15 || l > 85) return false;
 
     // Check hue
     let hueMatch = false;
