@@ -173,6 +173,34 @@ p {
     box-shadow: 0 5px 0 #c0392b;
 }
 
+/* Footer Info */
+.footer-info {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    color: #444;
+    padding: 0 20px;
+    padding-bottom: var(--safe-bottom);
+}
+
+.footer-info p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+.footer-info .author {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.footer-info .mission {
+    font-style: italic;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
 /* Target Display */
 #target-display {
     position: absolute;
