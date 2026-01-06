@@ -19,53 +19,53 @@ const DECAY_SPEED = 0.08;
 const COLORS = {
     'red': { 
         ranges: [
-            { h: [345, 360], s: [20, 100], l: [15, 85] },
-            { h: [0, 15], s: [20, 100], l: [15, 85] }
+            { h: [330, 360], s: [30, 100], l: [20, 90] },
+            { h: [0, 25], s: [30, 100], l: [20, 90] }
         ],
         name: 'czerwony', hex: '#ff4757' 
     },
     'green': { 
-        ranges: [{ h: [75, 150], s: [20, 100], l: [15, 85] }],
+        ranges: [{ h: [60, 170], s: [25, 100], l: [15, 90] }],
         name: 'zielony', hex: '#2ecc71' 
     },
     'blue': { 
-        ranges: [{ h: [190, 250], s: [20, 100], l: [15, 85] }],
+        ranges: [{ h: [170, 270], s: [30, 100], l: [15, 90] }],
         name: 'niebieski', hex: '#3742fa' 
     },
     'yellow': { 
-        ranges: [{ h: [45, 70], s: [20, 100], l: [15, 85] }],
+        ranges: [{ h: [35, 75], s: [30, 100], l: [30, 95] }],
         name: 'żółty', hex: '#f1c40f' 
     },
     'orange': { 
-        ranges: [{ h: [15, 45], s: [20, 100], l: [15, 85] }],
+        ranges: [{ h: [10, 50], s: [40, 100], l: [30, 90] }],
         name: 'pomarańczowy', hex: '#e67e22' 
     },
     'purple': { 
-        ranges: [{ h: [250, 290], s: [20, 100], l: [15, 85] }],
+        ranges: [{ h: [240, 310], s: [20, 100], l: [15, 80] }],
         name: 'fioletowy', hex: '#9b59b6' 
     },
     'pink': { 
-        ranges: [{ h: [290, 345], s: [20, 100], l: [15, 85] }],
+        ranges: [{ h: [280, 355], s: [20, 100], l: [40, 95] }],
         name: 'różowy', hex: '#ff6b81' 
     },
     'cyan': { 
-        ranges: [{ h: [150, 190], s: [20, 100], l: [15, 85] }],
+        ranges: [{ h: [150, 200], s: [30, 100], l: [30, 90] }],
         name: 'turkusowy', hex: '#00cec9' 
     },
     'white': { 
-        ranges: [{ h: [0, 360], s: [0, 20], l: [80, 100] }],
+        ranges: [{ h: [0, 360], s: [0, 30], l: [70, 100] }],
         name: 'biały', hex: '#ffffff' 
     },
     'black': { 
-        ranges: [{ h: [0, 360], s: [0, 100], l: [0, 15] }],
+        ranges: [{ h: [0, 360], s: [0, 100], l: [0, 25] }],
         name: 'czarny', hex: '#2f3542' 
     },
     'gray': { 
-        ranges: [{ h: [0, 360], s: [0, 20], l: [15, 80] }],
+        ranges: [{ h: [0, 360], s: [0, 25], l: [20, 75] }],
         name: 'szary', hex: '#a4b0be' 
     },
     'brown': {
-        ranges: [{ h: [10, 40], s: [20, 60], l: [10, 40] }],
+        ranges: [{ h: [0, 50], s: [20, 70], l: [10, 45] }],
         name: 'brązowy', hex: '#795548'
     }
 };
@@ -331,31 +331,18 @@ function rgbToHsl(r, g, b) {
 }
 
 function isColorMatch(h, s, l, targetKey) {
-    const target = COLORS[targetKey];
-    if (!target) return false;
+    const config = COLORS[targetKey];
+    if (!config) return false;
 
-    // Special logic for achromatics (white, black, gray)
-    if (targetKey === 'white' || targetKey === 'black' || targetKey === 'gray') {
-        // Ignore hue for these, check only Saturation and Lightness
-        const sMatch = (s >= target.s[0] && s <= target.s[1]);
-        const lMatch = (l >= target.l[0] && l <= target.l[1]);
-        return sMatch && lMatch;
-    }
-
-    // Basic validation for chromatic colors
-    // Must have some saturation and not be too dark/light
-    if (s < 20 || l < 15 || l > 85) return false;
-
-    // Check hue
-    let hueMatch = false;
-    // Handle red wrap-around
-    if (targetKey === 'red') {
-        hueMatch = (h >= target.h[0] || h <= target.h[1]);
-    } else {
-        hueMatch = (h >= target.h[0] && h <= target.h[1]);
-    }
-
-    return hueMatch;
+    // Iterate through all allowed ranges for this color
+    // If ANY range matches, return true (OR logic)
+    return config.ranges.some(r => {
+        const hMatch = (h >= r.h[0] && h <= r.h[1]);
+        const sMatch = (s >= r.s[0] && s <= r.s[1]);
+        const lMatch = (l >= r.l[0] && l <= r.l[1]);
+        
+        return hMatch && sMatch && lMatch;
+    });
 }
 
 // -------------------------------------------------------------------------
