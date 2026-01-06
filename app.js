@@ -164,6 +164,7 @@ const permBtn = document.getElementById('perm-btn');
 const nameInput = document.getElementById('player-name-input');
 const feedbackText = document.getElementById('feedback-text');
 const feedbackImg = document.getElementById('feedback-snapshot');
+const skipBtn = document.getElementById('skip-btn');
 
 // Audio / TTS
 let polishVoice = null;
@@ -213,6 +214,10 @@ async function init() {
         uiPermission.classList.add('hidden');
         startGame();
     });
+
+    if (skipBtn) {
+        skipBtn.addEventListener('click', skipTarget);
+    }
 
     // Handle visibility change for iOS camera resume
     document.addEventListener("visibilitychange", async () => {
@@ -375,6 +380,33 @@ function pickNewTarget() {
     
     // Speak
     speak(`Znajdź kolor ${COLORS[nextKey].name}`);
+}
+
+function skipTarget() {
+    // Reset confidence
+    state.confidence = 0;
+    const ring = document.querySelector('.ring-progress');
+    const wrapper = document.getElementById('crosshair-wrapper');
+    if (ring) {
+        ring.style.strokeDashoffset = 377;
+        ring.style.stroke = 'white';
+    }
+    if (wrapper) wrapper.classList.remove('detecting');
+
+    // Pick new target excluding current
+    const keys = Object.keys(COLORS);
+    const availableKeys = keys.filter(k => k !== state.currentTarget);
+    const nextKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+    state.currentTarget = nextKey;
+
+    // Update UI
+    targetIcon.style.backgroundColor = COLORS[nextKey].hex;
+    instructionText.innerText = `Znajdź ${COLORS[nextKey].name}`;
+
+    // Speak special message
+    // "Kornelia, poszukamy innym razem. Znajdź teraz [kolor]."
+    const text = `${state.playerName}, poszukamy innym razem. Znajdź teraz ${COLORS[nextKey].name}.`;
+    speak(text);
 }
 
 function handleSuccess() {
