@@ -22,7 +22,13 @@
         <!-- UI Overlay -->
         <div id="ui-layer">
             <!-- Crosshair -->
-            <div id="crosshair"></div>
+            <div id="crosshair-wrapper">
+                <svg class="progress-ring" width="140" height="140" viewBox="0 0 140 140">
+                    <circle class="ring-bg" cx="70" cy="70" r="60" />
+                    <circle class="ring-progress" cx="70" cy="70" r="60" />
+                </svg>
+                <div class="aim-dot"></div>
+            </div>
 
             <div id="target-display" class="hidden">
                 <div id="target-icon"></div>

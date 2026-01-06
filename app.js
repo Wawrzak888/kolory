@@ -6,23 +6,148 @@ const state = {
     currentTarget: null, // 'red', 'green', 'blue', 'yellow'
     score: 0,
     lastMatchTime: 0,
-    playerName: ''
+    playerName: '',
+    playerGender: 'MALE', // 'MALE' | 'FEMALE'
+    confidence: 0.0 // 0.0 - 1.0
 };
 
 // Config
+const CONFIDENCE_THRESHOLD = 1.0;
+const CHARGE_SPEED = 0.04;
+const DECAY_SPEED = 0.08;
+
 const COLORS = {
-    'red': { h: [345, 15], s: [20, 100], l: [15, 85], name: 'czerwony', hex: '#ff4757' },
-    'green': { h: [75, 150], s: [20, 100], l: [15, 85], name: 'zielony', hex: '#2ecc71' },
-    'blue': { h: [190, 250], s: [20, 100], l: [15, 85], name: 'niebieski', hex: '#3742fa' },
-    'yellow': { h: [45, 70], s: [20, 100], l: [15, 85], name: 'żółty', hex: '#f1c40f' },
-    'orange': { h: [15, 45], s: [20, 100], l: [15, 85], name: 'pomarańczowy', hex: '#e67e22' },
-    'purple': { h: [250, 290], s: [20, 100], l: [15, 85], name: 'fioletowy', hex: '#9b59b6' },
-    'pink': { h: [290, 345], s: [20, 100], l: [15, 85], name: 'różowy', hex: '#ff6b81' },
-    'cyan': { h: [150, 190], s: [20, 100], l: [15, 85], name: 'turkusowy', hex: '#00cec9' },
-    'white': { h: [0, 360], s: [0, 20], l: [80, 100], name: 'biały', hex: '#ffffff' },
-    'black': { h: [0, 360], s: [0, 100], l: [0, 15], name: 'czarny', hex: '#2f3542' },
-    'gray': { h: [0, 360], s: [0, 20], l: [15, 80], name: 'szary', hex: '#a4b0be' }
+    'red': { 
+        ranges: [
+            { h: [345, 360], s: [20, 100], l: [15, 85] },
+            { h: [0, 15], s: [20, 100], l: [15, 85] }
+        ],
+        name: 'czerwony', hex: '#ff4757' 
+    },
+    'green': { 
+        ranges: [{ h: [75, 150], s: [20, 100], l: [15, 85] }],
+        name: 'zielony', hex: '#2ecc71' 
+    },
+    'blue': { 
+        ranges: [{ h: [190, 250], s: [20, 100], l: [15, 85] }],
+        name: 'niebieski', hex: '#3742fa' 
+    },
+    'yellow': { 
+        ranges: [{ h: [45, 70], s: [20, 100], l: [15, 85] }],
+        name: 'żółty', hex: '#f1c40f' 
+    },
+    'orange': { 
+        ranges: [{ h: [15, 45], s: [20, 100], l: [15, 85] }],
+        name: 'pomarańczowy', hex: '#e67e22' 
+    },
+    'purple': { 
+        ranges: [{ h: [250, 290], s: [20, 100], l: [15, 85] }],
+        name: 'fioletowy', hex: '#9b59b6' 
+    },
+    'pink': { 
+        ranges: [{ h: [290, 345], s: [20, 100], l: [15, 85] }],
+        name: 'różowy', hex: '#ff6b81' 
+    },
+    'cyan': { 
+        ranges: [{ h: [150, 190], s: [20, 100], l: [15, 85] }],
+        name: 'turkusowy', hex: '#00cec9' 
+    },
+    'white': { 
+        ranges: [{ h: [0, 360], s: [0, 20], l: [80, 100] }],
+        name: 'biały', hex: '#ffffff' 
+    },
+    'black': { 
+        ranges: [{ h: [0, 360], s: [0, 100], l: [0, 15] }],
+        name: 'czarny', hex: '#2f3542' 
+    },
+    'gray': { 
+        ranges: [{ h: [0, 360], s: [0, 20], l: [15, 80] }],
+        name: 'szary', hex: '#a4b0be' 
+    },
+    'brown': {
+        ranges: [{ h: [10, 40], s: [20, 60], l: [10, 40] }],
+        name: 'brązowy', hex: '#795548'
+    }
 };
+
+// -------------------------------------------------------------------------
+// 0. Gender Detector Logic
+// -------------------------------------------------------------------------
+class GenderDetector {
+    constructor() {
+        this.MALE_EXCEPTIONS_ENDING_A = new Set(['kuba', 'barnaba', 'bonawentura', 'jarema', 'kosma']);
+        this.FEMALE_EXCEPTIONS_NO_A = new Set([
+            'beatrycze', 'inez', 'noemi', 'nel', 'karmen', 'miriam', 
+            'nicole', 'abigail', 'rut', 'iris', 'lili', 'vivi'
+        ]);
+    }
+
+    normalize(name) {
+        if (!name) return '';
+        return name.trim().toLowerCase().replace(/[^a-zęóąśłżźćń]/g, '');
+    }
+
+    predictGender(rawName) {
+        const name = this.normalize(rawName);
+        if (!name) return 'MALE';
+
+        if (this.MALE_EXCEPTIONS_ENDING_A.has(name)) return 'MALE';
+        if (this.FEMALE_EXCEPTIONS_NO_A.has(name)) return 'FEMALE';
+        if (name.endsWith('u')) return 'MALE'; // Wołacz: Adasiu
+        if (name.endsWith('a')) return 'FEMALE';
+
+        return 'MALE';
+    }
+}
+const genderDetector = new GenderDetector();
+
+// -------------------------------------------------------------------------
+// 0. Audio Engine (Web Audio API)
+// -------------------------------------------------------------------------
+let audioCtx = null;
+let oscillator = null;
+let gainNode = null;
+
+function initAudioEngine() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function updateSoundFeedback(confidence) {
+    if (!audioCtx) return;
+
+    if (confidence <= 0.05 || confidence >= 1.0) {
+        if (oscillator) {
+            const now = audioCtx.currentTime;
+            gainNode.gain.cancelScheduledValues(now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+            oscillator.stop(now + 0.1);
+            oscillator = null;
+        }
+        return;
+    }
+
+    if (!oscillator) {
+        oscillator = audioCtx.createOscillator();
+        gainNode = audioCtx.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+        oscillator.start(now);
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.1);
+    }
+
+    // Rising Pitch: 200Hz -> 600Hz
+    const baseFreq = 200;
+    const maxFreq = 600;
+    const targetFreq = baseFreq + (confidence * (maxFreq - baseFreq));
+    oscillator.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
+}
 
 // DOM Elements
 const video = document.getElementById('camera-feed');
@@ -55,15 +180,24 @@ async function init() {
         nameInput.value = savedName;
     }
 
-    startBtn.addEventListener('click', () => {
+    startBtn.addEventListener('click', async () => {
         const name = nameInput.value.trim();
         if (!name) {
             alert("Proszę wpisz swoje imię!");
             return;
         }
         state.playerName = name;
+        state.playerGender = genderDetector.predictGender(name);
+        console.log(`Detected gender for ${name}: ${state.playerGender}`);
+        
         localStorage.setItem('lowcy_player_name', name);
         
+        // Initialize Audio Engine & Resume Context (iOS)
+        initAudioEngine();
+        if (audioCtx && audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+        }
+
         // Warm up TTS immediately on click
         speak(`Cześć ${name}!`);
 
@@ -248,7 +382,10 @@ function handleSuccess() {
     if (now - state.lastMatchTime < 4000) return; // Increased cooldown for snapshot viewing
     state.lastMatchTime = now;
 
-    const praiseText = `Brawo ${state.playerName}, znalazłeś kolor!`;
+    // Use Gender Detector for Correct Inflection
+    // Znalazł (MALE) / Znalazła (FEMALE)
+    const verb = (state.playerGender === 'FEMALE') ? 'znalazłaś' : 'znalazłeś';
+    const praiseText = `Brawo ${state.playerName}, ${verb} kolor!`;
 
     // Capture Snapshot
     const snapCanvas = document.createElement('canvas');
@@ -320,9 +457,44 @@ function gameLoop() {
             }
         }
 
-        // If > 30% pixels match, trigger success
-        if (matchCount > totalPixels * 0.3) {
+        // --- Confidence Accumulation Logic ---
+        // If > 30% pixels match, consider it a match frame
+        const isMatch = (matchCount > totalPixels * 0.3);
+        const ring = document.querySelector('.ring-progress');
+        const wrapper = document.getElementById('crosshair-wrapper');
+        
+        if (isMatch) {
+            // Charging
+            state.confidence = Math.min(state.confidence + CHARGE_SPEED, CONFIDENCE_THRESHOLD);
+            wrapper.classList.add('detecting');
+            // Set ring color to target hex
+            const targetColor = COLORS[state.currentTarget];
+            if(targetColor) ring.style.stroke = targetColor.hex;
+
+        } else {
+            // Decaying
+            state.confidence = Math.max(state.confidence - DECAY_SPEED, 0);
+            if (state.confidence <= 0) {
+                wrapper.classList.remove('detecting');
+                ring.style.stroke = 'white'; // Reset
+            }
+        }
+
+        // Update UI (Progress Ring)
+        // Circumference ≈ 377
+        const maxOffset = 377;
+        const currentOffset = maxOffset - (state.confidence * maxOffset);
+        ring.style.strokeDashoffset = currentOffset;
+
+        // Audio Feedback (Sonification)
+        updateSoundFeedback(state.confidence);
+
+        // Success Condition
+        if (state.confidence >= CONFIDENCE_THRESHOLD) {
             handleSuccess();
+            state.confidence = 0; // Reset
+            ring.style.strokeDashoffset = maxOffset; // Visually reset
+            wrapper.classList.remove('detecting');
         }
     }
 
